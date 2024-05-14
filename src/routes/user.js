@@ -24,7 +24,7 @@ router.get('/user/menu-access', validateAuth, async (req, res) => {
   const { logger, jwtPayload } = req.locals;
 
   try {
-    const response = await userController.getRoleAccess(jwtPayload);
+    const response = await userController.getMenuAccess(jwtPayload);
 
     return res.status(200).send(response);
   } catch (error) {

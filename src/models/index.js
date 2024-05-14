@@ -1,7 +1,7 @@
 const UserModel = require("./user");
-const RoleAccessModel = require("./roleAccess");
+const RoleModel = require("./role");
 
 module.exports = {
   UserModel,
-  RoleAccessModel
+  RoleModel
 };

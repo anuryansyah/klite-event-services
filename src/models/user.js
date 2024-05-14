@@ -19,7 +19,7 @@ const userSchema = mongoose.Schema({
     required: true
   },
   roleId: {
-    type: mongoose.SchemaTypes.ObjectId, ref: 'RoleAccess'
+    type: mongoose.SchemaTypes.ObjectId, ref: 'Roles'
   },
   telegramId: {
     type: String,

@@ -1,4 +1,4 @@
-const { UserModel, RoleAccessModel } = require("../models");
+const { UserModel, RoleModel } = require("../models");
 
 exports.getProfile = async (session) => {
   const user = await UserModel.findOne({ _id: session.id }).populate('roleId').lean();
@@ -12,8 +12,8 @@ exports.getProfile = async (session) => {
   return user;
 };
 
-exports.getRoleAccess = async (session) => {
-  const role = await RoleAccessModel.findOne({ _id: session.roleId }).lean();
+exports.getMenuAccess = async (session) => {
+  const role = await RoleModel.findOne({ _id: session.roleId }).lean();
   if (role) {
     return role.menuAccess
   }

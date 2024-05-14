@@ -9,10 +9,10 @@ const { USER_STATUS, USER_ROLE_DEFAULT } = require('../constant');
 exports.register = async (payload) => {
   const { username, fullname, phoneNumber, password } = payload;
 
-  const userExist = await UserModel.findOne({ username });
+  const user = await UserModel.find({ $or: [{ phoneNumber }, { username }] });
 
-  if (userExist) {
-    const error = new Error(`Email ${username} has been registered!`);
+  if (user.length >= 1) {
+    const error = new Error(`Email atau No. Handphone sudah terdaftar!`);
     error.httpCode = 409;
 
     throw error;
@@ -32,7 +32,7 @@ exports.register = async (payload) => {
 
   return {
     status: true,
-    message: "Registration Success.",
+    message: "Registrasi Berhasil.",
   };
 };
 
@@ -58,7 +58,7 @@ exports.login = async (payload) => {
     }
   }
 
-  error = new Error("Incorrect username or password");
+  error = new Error("Email Atau Password Salah!");
   error.httpCode = 401;
 
   throw error;
@@ -80,11 +80,11 @@ exports.accountVerification = async (session, smtpTransporter) => {
     
     return {
       status: true,
-      message: 'Email has been sent.'
+      message: 'Email Telah Terkirim, Tolong Periksa Email Anda.'
     }
   }
   
-  const error = new Error('User not found');
+  const error = new Error('Akun Tidak Ditemukan');
   error.httpCode = 404;
 
   throw error;
@@ -101,13 +101,13 @@ exports.submitAccountVerification = async (session, payload) => {
   if (securityCode === user.securityCode) {
     if (user.status === USER_STATUS.NEW) {
       query = { securityCode: '', status: USER_STATUS.ACTIVE }
-      message = 'Account has been verified.';
+      message = 'Akun Telah Terverifikasi.';
     } else {
       const salt = await bcrypt.genSalt(10);
       const hashedPassword = await bcrypt.hash(newPassword, salt);
 
       query = { securityCode: '', status: USER_STATUS.ACTIVE, password: hashedPassword }
-      message = 'The password has been changed successfully.'
+      message = 'Password Berhasil Diperbarui.'
     }
 
     await UserModel.updateOne({ _id: id }, { $set: query });
@@ -118,7 +118,7 @@ exports.submitAccountVerification = async (session, payload) => {
     };
   }
 
-  const error = new Error('OTP is invalid. Please enter correct password.');
+  const error = new Error('Kode OTP Salah. Tolong Masukan Kode Yang Benar.');
   error.httpCode = 403;
 
   throw error;
@@ -140,7 +140,7 @@ exports.forgotPassword = async (payload, smtpTransporter) => {
     
     return {
       status: true,
-      message: 'Email has been sent.'
+      message: 'Email Telah Terkirim, Tolong Periksa Email Anda.'
     }
   }
   
@@ -162,7 +162,7 @@ exports.submitForgotPassword = async (payload) => {
     const hashedPassword = await bcrypt.hash(password, salt);
 
     query = { securityCode: '', status: USER_STATUS.ACTIVE, password: hashedPassword }
-    message = 'The password has been changed successfully.'
+    message = 'Password Berhasil Diperbarui.'
 
     await UserModel.updateOne({ _id: user._id }, { $set: query });
 
@@ -172,7 +172,7 @@ exports.submitForgotPassword = async (payload) => {
     };
   }
 
-  const error = new Error('OTP is invalid. Please enter correct password.');
+  const error = new Error('Kode OTP Salah. Tolong Masukan Kode Yang Benar.');
   error.httpCode = 403;
 
   throw error;

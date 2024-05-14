@@ -1,12 +1,12 @@
 module.exports = {
   USER_STATUS: { NEW: 0, ACTIVE: 1, INACTIVE: 2 },
   REGISTRATION_VERIFY: {
-    TITLE: 'VERIFY YOUR EMAIL ADDRESS',
-    MESSAGE: 'Thank you for registering with us, your account has been successfully created. Please use the following OTP to verify your account:'
+    TITLE: 'Verifikasi Email',
+    MESSAGE: 'Akun anda telah berhasil dibuat. Silahkan gunakan OTP berikut untuk memverifikasi akun anda:'
   },
   FORGOT_PASSWORD: {
-    TITLE: 'FORGOT PASSWORD',
-    MESSAGE: 'We received a request to reset the password for your account. To proceed with the password reset, please use the following OTP:'
+    TITLE: 'Lupa Password',
+    MESSAGE: 'Kami melihat bahwa Anda mengalami masalah dengan kata sandi akun Anda. Jangan khawatir, kami akan membantu Anda mengatur ulang kata sandi Anda. Berikut adalah kode OTP Anda untuk mengatur ulang kata sandi:'
   },
   USER_ROLE_DEFAULT: '663e08cd82078df3ed17f532'
 };

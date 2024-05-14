@@ -1,8 +1,11 @@
 {
-  "name": "starter_services",
+  "name": "klite_event_services",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
+  "engines": {
+    "node": "18.x"
+  },
   "scripts": {
     "start": "node ./src/server.js",
     "dev": "nodemon ./src/server.js | bunyan",

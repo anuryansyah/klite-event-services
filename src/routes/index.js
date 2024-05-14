@@ -1,9 +1,11 @@
 const authRoute = require('./auth');
 const userRoute = require('./user');
+const roleRoute = require('./role');
 
 const routes = [
   authRoute,
-  userRoute
+  userRoute,
+  roleRoute
 ]
 
 module.exports = (app) => {
