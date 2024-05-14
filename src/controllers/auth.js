@@ -58,7 +58,7 @@ exports.login = async (payload) => {
     }
   }
 
-  error = new Error("Email Atau Password Salah!");
+  error = new Error("Email Atau Password Salah!!");
   error.httpCode = 401;
 
   throw error;
