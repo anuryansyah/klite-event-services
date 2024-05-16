@@ -1,3 +1,4 @@
 const mailSender = require('./mailSender');
+const telegramBotUtils = require('./botTelegram');
 
-module.exports = { mailSender };
+module.exports = { mailSender, telegramBotUtils };

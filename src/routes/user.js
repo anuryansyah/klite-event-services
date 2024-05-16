@@ -34,4 +34,46 @@ router.get('/user/menu-access', validateAuth, async (req, res) => {
   }
 })
 
+router.post('/user/create', validateAuth, async (req, res) => {
+  const { logger } = req.locals;
+
+  try {
+    const response = await userController.create(req.body);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
+router.put('/user/update', validateAuth, async (req, res) => {
+  const { logger, jwtPayload } = req.locals;
+
+  try {
+    const response = await userController.update(req.body, jwtPayload);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
+router.put('/user/change-password', validateAuth, async (req, res) => {
+  const { logger, jwtPayload } = req.locals;
+
+  try {
+    const response = await userController.updatePassword(req.body, jwtPayload);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
 module.exports = router;

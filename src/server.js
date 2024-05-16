@@ -9,6 +9,7 @@ const config = require('../config');
 const { dbConnector } = require('./connectors');
 const routes = require('./routes');
 const smtpConnector = require('./connectors/smtpConnector');
+const { telegramBotUtils } = require('./utils');
 
 const app = express();
 
@@ -18,6 +19,9 @@ const {
   smtpServer: smtpConfig,
   logger
 } = config;
+
+//Telegram Bot
+telegramBotUtils.listen(logger);
 
 // Initializations
 dbConnector(dbConfig, logger);
