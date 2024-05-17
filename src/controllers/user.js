@@ -27,7 +27,7 @@ exports.create = async (payload) => {
 
   if (user.length >= 1) {
     const error = new Error(`Email atau No. Handphone sudah terdaftar!`);
-    error.httpCode = 409;
+    error.httpCode = 400;
 
     throw error;
   }
@@ -79,21 +79,32 @@ exports.update = async (payload, session) => {
 }
 
 exports.updatePassword = async (payload, session) => {
-  const { password } = payload;
-
+  const { password, newPassword } = payload;
   const salt = await bcrypt.genSalt(10);
-  const hashedPassword = await bcrypt.hash(password, salt);
 
-  const update = {
-    $set: {
-      password: hashedPassword
+  const user = await UserModel.findOne({ _id: session.id }).lean();
+
+  const isPasswordCorrect = await bcrypt.compare(password, user.password);
+
+  if (isPasswordCorrect) {
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+    const update = {
+      $set: {
+        password: hashedPassword
+      }
     }
-  }
+  
+    await UserModel.updateOne({ _id: session.id }, update);
+    
+    const response = {
+      status : true,
+      message: "Password Berhasil Diperbarui"
+    }
+    return response;
+  } else {
+    const error = new Error('Password Salah!');
+    error.httpCode = 400;
 
-  await UserModel.updateOne({ _id: session.id }, update);
-  const response = {
-    status : true,
-    message: "Password Berhasil Diperbarui"
+    throw error;
   }
-  return response;
 }
