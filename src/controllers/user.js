@@ -1,3 +1,4 @@
+const { DEFAULT_PASSWORD } = require("../constant");
 const { UserModel, RoleModel } = require("../models");
 const bcrypt = require("bcryptjs");
 
@@ -20,8 +21,58 @@ exports.getMenuAccess = async (session) => {
   }
 };
 
+exports.getList = async (params) => {
+  const { page, limit, keywords } = params;
+
+  const filter = {
+    isDelete: false,
+  };
+
+  if (keywords) {
+    filter.$or = [
+      { fullname: new RegExp(keywords, "i") },
+      { username: new RegExp(keywords, "i") }
+    ];
+  }
+
+  const users = await UserModel.find(filter)
+    .limit(limit * 1)
+    .skip((page - 1) * limit)
+    .populate("roleId")
+    .sort({ createDate: 'desc' })
+    .lean();
+
+  const countTotal = await UserModel.countDocuments(filter);
+  const userData = [];
+
+  users.map((data) => {
+    userData.push({
+      id: data._id,
+      username: data.username,
+      fullname: data.fullname,
+      phoneNumber: data.phoneNumber,
+      role: {
+        id: data.roleId._id,
+        roleName: data.roleId.roleName,
+        roleDesc: data.roleId.roleDesc,
+      },
+      notification: data.telegramId ? true : false,
+      status: data.status,
+      createDate: data.createDate,
+    });
+  });
+
+  const response = {
+    data: userData,
+    totalRow: countTotal,
+    totalPage: Math.ceil(countTotal / limit)
+  };
+
+  return response;
+}
+
 exports.create = async (payload) => {
-  const { username, fullname, phoneNumber, password, roleId } = payload;
+  const { username, fullname, phoneNumber, roleId } = payload;
 
   const user = await UserModel.find({ $or: [{ phoneNumber }, { username }] });
 
@@ -31,6 +82,8 @@ exports.create = async (payload) => {
 
     throw error;
   }
+  
+  const password = DEFAULT_PASSWORD;
 
   const salt = await bcrypt.genSalt(10);
   const hashedPassword = await bcrypt.hash(password, salt);
@@ -81,6 +134,8 @@ exports.update = async (payload, session) => {
 exports.updatePassword = async (payload, session) => {
   const { password, newPassword } = payload;
   const salt = await bcrypt.genSalt(10);
+
+  console.log(payload);
 
   const user = await UserModel.findOne({ _id: session.id }).lean();
 

@@ -1,7 +1,7 @@
 const { RoleModel } = require("../models");
 
 exports.getList = async () => {
-  const role = await RoleModel.find().lean();
+  const role = await RoleModel.find({ roleName: { $ne: 'admin' } }).lean();
 
   const data = role.map(d => {
     return {

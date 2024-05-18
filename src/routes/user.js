@@ -34,6 +34,20 @@ router.get('/user/menu-access', validateAuth, async (req, res) => {
   }
 })
 
+router.get('/user/list', validateAuth, async (req, res) => {
+  const { logger } = req.locals;
+
+  try {
+    const response = await userController.getList(req.query);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
 router.post('/user/create', validateAuth, async (req, res) => {
   const { logger } = req.locals;
 
