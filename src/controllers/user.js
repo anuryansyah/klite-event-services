@@ -71,6 +71,21 @@ exports.getList = async (params) => {
   return response;
 }
 
+exports.getListAnnouncer = async () => {
+  const role = await RoleModel.findOne({ roleName: 'announcer' }).lean();
+  const users = await UserModel.find({ roleId: role._id }).lean();
+  const data = [];
+
+  users.map(user => {
+    data.push({
+      id: user._id,
+      fullname: user.fullname,
+    })
+  })
+
+  return data;
+}
+
 exports.create = async (payload) => {
   const { username, fullname, phoneNumber, roleId } = payload;
 
