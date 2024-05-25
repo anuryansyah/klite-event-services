@@ -1,9 +1,9 @@
 const { DEFAULT_PASSWORD } = require("../constant");
-const { UserModel, RoleModel, DailyEventModel } = require("../models");
+const { UserModel, RoleModel, DailyEventModel, SpecialEventModel } = require("../models");
 const bcrypt = require("bcryptjs");
 
 exports.getList = async (params) => {
-  const { page, limit, keywords, day } = params;
+  const { page, limit, keywords, startDate, endDate } = params;
 
   const filter = {
     isDelete: false,
@@ -16,11 +16,15 @@ exports.getList = async (params) => {
     ];
   }
 
-  if (day) {
-    filter.day = day;
+  if (startDate && endDate) {
+    filter.date = { $gte: new Date(startDate), $lte: new Date(endDate).setHours(23, 59, 59, 999) };
+  } else if (startDate) {
+    filter.date = { $gte: new Date(startDate) };
+  } else if (endDate) {
+    filter.date = { $lte: new Date(endDate).setHours(23, 59, 59, 999) };
   }
 
-  const events = await DailyEventModel.find(filter)
+  const events = await SpecialEventModel.find(filter)
     .limit(limit * 1)
     .skip((page - 1) * limit)
     .populate("announcer")
@@ -29,7 +33,7 @@ exports.getList = async (params) => {
     .sort({ createDate: 'desc' })
     .lean();
 
-  const countTotal = await DailyEventModel.countDocuments(filter);
+  const countTotal = await SpecialEventModel.countDocuments(filter);
   const eventData = [];
 
   events.map((data) => {
@@ -37,7 +41,8 @@ exports.getList = async (params) => {
       id: data._id,
       title: data.title,
       desc: data.desc,
-      day: data.day,
+      type: data.type,
+      date: data.date,
       startHour: data.startHour,
       endHour: data.endHour,
       announcer: data.announcer.map(a => a.fullname).join(', '),
@@ -58,7 +63,7 @@ exports.getList = async (params) => {
 }
 
 exports.getDetail = async (_id) => {
-  const event = await DailyEventModel.findOne({ _id })
+  const event = await SpecialEventModel.findOne({ _id })
     .populate('announcer')
     .populate("createBy")
     .populate("updateBy")
@@ -69,13 +74,14 @@ exports.getDetail = async (_id) => {
       id: event._id,
       title: event.title,
       desc: event.desc,
+      type: event.type,
+      date: event.date,
       announcer: event.announcer.map(d => {
         return {
           id: d._id,
           fullname: d.fullname,
         }
       }),
-      day: event.day,
       startHour: event.startHour,
       endHour: event.endHour,
       createDate: event.createDate,
@@ -97,13 +103,14 @@ exports.getDetail = async (_id) => {
 }
 
 exports.create = async (payload, session) => {
-  const { title, desc, announcer, day, startHour, endHour } = payload;
+  const { title, desc, type, announcer, date, startHour, endHour } = payload;
 
-  const newEvent = new DailyEventModel({
+  const newEvent = new SpecialEventModel({
     title,
     desc,
+    type,
     announcer,
-    day,
+    date: new Date(date),
     startHour,
     endHour,
     createBy: session.id
@@ -119,7 +126,7 @@ exports.create = async (payload, session) => {
 exports.update = async (_id, payload, session) => {
   const { title, desc, announcer, day, startHour, endHour } = payload;
 
-  const event = await DailyEventModel.findOne({ _id }).lean();
+  const event = await SpecialEventModel.findOne({ _id }).lean();
 
   if (event) {
     const update = {
@@ -135,7 +142,7 @@ exports.update = async (_id, payload, session) => {
       }
     }
   
-    await DailyEventModel.updateOne({ _id }, update);
+    await SpecialEventModel.updateOne({ _id }, update);
       const response = {
         status : true,
         message: "Acara Berhasil Diperbarui"
@@ -150,7 +157,7 @@ exports.update = async (_id, payload, session) => {
 }
 
 exports.delete = async (_id, session) => {
-  const event = await DailyEventModel.findOne({ _id }).lean();
+  const event = await SpecialEventModel.findOne({ _id }).lean();
 
   if (event) {
     const update = {
@@ -161,7 +168,7 @@ exports.delete = async (_id, session) => {
       }
     }
   
-    await DailyEventModel.updateOne({ _id }, update);
+    await SpecialEventModel.updateOne({ _id }, update);
       const response = {
         status : true,
         message: "Acara Berhasil Dihapus"
