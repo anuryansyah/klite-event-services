@@ -21,28 +21,33 @@ const listen = async (logger) => {
   bot.onText(/\/registrasi/, async (msg) => {
     const chatId = msg.chat.id;
     const input = msg.text;
-    const inputArray = input.split(' ');
-    const usernamePass = inputArray[1];
-    const usernamePassArray = usernamePass.split(':')
-
     let response = ``
-
-    if(usernamePassArray.length === 2) {
-      const userData = await UserModel.findOne({ username: usernamePassArray[0] }).lean();
-
-      if(userData) {
-        const isPasswordCorrect = await bcrypt.compare(usernamePassArray[1], userData.password);
-
-        if (isPasswordCorrect) {
-          await UserModel.updateOne(
-            { _id: userData._id },
-            { $set: {  telegramId: chatId } }
-          );
-          response = `Selamat ${userData.fullname}, Anda berhasil terhubung dengan aplikasi. \nMulai saat ini Anda akan menerima notifikasi secara otomatis.`
+    
+    if (input.includes(' ')) {
+      const inputArray = input.split(' ');
+      const usernamePass = inputArray[1];
+      const usernamePassArray = usernamePass.split(':')
+  
+      if(usernamePassArray.length === 2) {
+        const userData = await UserModel.findOne({ username: usernamePassArray[0] }).lean();
+  
+        if(userData) {
+          const isPasswordCorrect = await bcrypt.compare(usernamePassArray[1], userData.password);
+  
+          if (isPasswordCorrect) {
+            await UserModel.updateOne(
+              { _id: userData._id },
+              { $set: {  telegramId: chatId } }
+            );
+            response = `Selamat ${userData.fullname}, Anda berhasil terhubung dengan aplikasi. \nMulai saat ini Anda akan menerima notifikasi secara otomatis.`
+          } else {
+            response = `Maaf, Email atau Password salah.`
+          }
         } else {
           response = `Maaf, Email atau Password salah.`
         }
-
+      } else {
+        response = `Maaf, perintah yang Anda masukkan tidak valid. Silakan coba lagi sesuai panduan.`
       }
     } else {
       response = `Maaf, perintah yang Anda masukkan tidak valid. Silakan coba lagi sesuai panduan.`
