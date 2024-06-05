@@ -10,13 +10,6 @@ const options = {
 const bot = new TelegramBot(token, options);
 
 const listen = async (logger) => {
-  bot.on('polling_error', (error) => {
-    console.error(`Polling error: ${error.code}, ${error.message}`);
-    setTimeout(() => {
-      bot.getUpdates();
-    }, 15000); // Tunggu 5 detik sebelum mencoba polling lagi
-  });
-
   bot.onText(/\/start/, (msg) => {
     const chatId = msg.chat.id;
     const name = msg.chat.first_name;
