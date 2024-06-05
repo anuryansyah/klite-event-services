@@ -1,11 +1,15 @@
 const mongoose = require('mongoose');
 
-const specialEventSchema = mongoose.Schema({
+const scheduleSchema = mongoose.Schema({
   title: {
     type: String,
     required: true
   },
   desc: {
+    type: String,
+    required: true
+  },
+  category: {
     type: String,
     required: true
   },
@@ -26,10 +30,6 @@ const specialEventSchema = mongoose.Schema({
     type: String,
     required: true
   },
-  isDelete: {
-    type: Boolean,
-    default: false
-  },
   createDate: {
     type: Date,
     default: Date.now
@@ -45,4 +45,4 @@ const specialEventSchema = mongoose.Schema({
   }
 })
 
-module.exports = mongoose.model('SpecialEvent', specialEventSchema, '_specialEvents')
+module.exports = mongoose.model('Schedule', scheduleSchema, '_schedule')

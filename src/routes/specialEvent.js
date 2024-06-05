@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const { dailyEventController, specialEventController } = require('../controllers');
+const { specialEventController } = require('../controllers');
 const {
   jwt: {
     validateAuth

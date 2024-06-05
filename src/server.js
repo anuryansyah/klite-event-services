@@ -21,7 +21,7 @@ const {
 } = config;
 
 //Telegram Bot
-// telegramBotUtils.listen(logger);
+telegramBotUtils.listen(logger);
 
 // Initializations
 dbConnector(dbConfig, logger);

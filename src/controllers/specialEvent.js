@@ -1,6 +1,4 @@
-const { DEFAULT_PASSWORD } = require("../constant");
-const { UserModel, RoleModel, DailyEventModel, SpecialEventModel } = require("../models");
-const bcrypt = require("bcryptjs");
+const { SpecialEventModel } = require("../models");
 
 exports.getList = async (params) => {
   const { page, limit, keywords, startDate, endDate } = params;
@@ -41,7 +39,6 @@ exports.getList = async (params) => {
       id: data._id,
       title: data.title,
       desc: data.desc,
-      type: data.type,
       date: data.date,
       startHour: data.startHour,
       endHour: data.endHour,
@@ -74,7 +71,6 @@ exports.getDetail = async (_id) => {
       id: event._id,
       title: event.title,
       desc: event.desc,
-      type: event.type,
       date: event.date,
       announcer: event.announcer.map(d => {
         return {
@@ -103,12 +99,11 @@ exports.getDetail = async (_id) => {
 }
 
 exports.create = async (payload, session) => {
-  const { title, desc, type, announcer, date, startHour, endHour } = payload;
+  const { title, desc, announcer, date, startHour, endHour } = payload;
 
   const newEvent = new SpecialEventModel({
     title,
     desc,
-    type,
     announcer,
     date: new Date(date),
     startHour,
@@ -124,7 +119,7 @@ exports.create = async (payload, session) => {
 }
 
 exports.update = async (_id, payload, session) => {
-  const { title, desc, announcer, day, startHour, endHour } = payload;
+  const { title, desc, announcer, date, startHour, endHour } = payload;
 
   const event = await SpecialEventModel.findOne({ _id }).lean();
 
@@ -134,7 +129,7 @@ exports.update = async (_id, payload, session) => {
         title,
         desc,
         announcer,
-        day,
+        date: new Date(date),
         startHour,
         endHour,
         updateDate: new Date(),
