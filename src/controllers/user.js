@@ -24,6 +24,7 @@ exports.getMenuAccess = async (session) => {
 exports.getList = async (params) => {
   const { page, limit, keywords } = params;
 
+  // get role id
   const adminRoleId = await RoleModel.find({ roleName: 'admin' }).lean()
   const adminUser = await UserModel.find({ roleId: adminRoleId }).lean()
   const adminIds = adminUser.map(admin => admin._id.toString())
