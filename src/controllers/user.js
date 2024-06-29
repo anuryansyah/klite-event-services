@@ -24,6 +24,10 @@ exports.getMenuAccess = async (session) => {
 exports.getList = async (params) => {
   const { page, limit, keywords } = params;
 
+  const adminRoleId = await RoleModel.find({ roleName: 'admin' }).lean()
+  const adminUser = await UserModel.find({ roleId: adminRoleId }).lean()
+  const adminIds = adminUser.map(admin => admin._id.toString())
+
   const filter = {
     isDelete: false,
   };
@@ -33,6 +37,10 @@ exports.getList = async (params) => {
       { fullname: new RegExp(keywords, "i") },
       { username: new RegExp(keywords, "i") }
     ];
+  }
+
+  if (adminIds.length > 0) {
+    filter._id = { $nin: adminIds };
   }
 
   const users = await UserModel.find(filter)
@@ -150,8 +158,6 @@ exports.updatePassword = async (payload, session) => {
   const { password, newPassword } = payload;
   const salt = await bcrypt.genSalt(10);
 
-  console.log(payload);
-
   const user = await UserModel.findOne({ _id: session.id }).lean();
 
   const isPasswordCorrect = await bcrypt.compare(password, user.password);
@@ -177,4 +183,22 @@ exports.updatePassword = async (payload, session) => {
 
     throw error;
   }
+}
+
+exports.delete = async (_id) => {
+  const user = await UserModel.findOne({ _id }).lean();
+
+  if (user) {
+    await UserModel.updateOne({ _id }, {isDelete: true});
+    const response = {
+      status : true,
+      message: "User Berhasil Dihapus"
+    }
+    return response;
+  }
+
+  const error = new Error('User Tidak Ditemukan');
+  error.httpCode = 404;
+
+  throw error;
 }

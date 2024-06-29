@@ -1,6 +1,7 @@
 const { DEFAULT_PASSWORD } = require("../constant");
 const { UserModel, RoleModel, DailyEventModel } = require("../models");
 const bcrypt = require("bcryptjs");
+const { timeCheckUtils } = require("../utils");
 
 exports.getList = async (params) => {
   const { page, limit, keywords, day } = params;
@@ -108,6 +109,15 @@ exports.create = async (payload, session) => {
     endHour,
     createBy: session.id
   })
+
+  const isConflicting = await timeCheckUtils.checkDailyConflict(day, startHour, endHour, newEvent._id);
+
+  if (isConflicting) {
+    const conflictError = new Error('Waktu acara bertabrakan dengan acara yang sudah ada.');
+    conflictError.httpCode = 400;
+    throw conflictError;
+  }
+
   await newEvent.save();
 
   return {
@@ -122,6 +132,14 @@ exports.update = async (_id, payload, session) => {
   const event = await DailyEventModel.findOne({ _id }).lean();
 
   if (event) {
+    const isConflicting = await timeCheckUtils.checkDailyConflict(day, startHour, endHour, event._id);
+
+    if (isConflicting) {
+      const conflictError = new Error('Waktu acara bertabrakan dengan acara yang sudah ada.');
+      conflictError.httpCode = 400;
+      throw conflictError;
+    }
+
     const update = {
       $set: {
         title,

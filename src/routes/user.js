@@ -104,4 +104,19 @@ router.put('/user/change-password', validateAuth, async (req, res) => {
   }
 })
 
+router.delete('/user/delete', validateAuth, async (req, res) => {
+  const { logger } = req.locals;
+  const { id } = req.query;
+
+  try {
+    const response = await userController.delete(id);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
 module.exports = router;

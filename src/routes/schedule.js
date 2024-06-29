@@ -20,6 +20,20 @@ router.get('/schedule/list', validateAuth, async (req, res) => {
   }
 })
 
+router.get('/schedule/list-by-user', validateAuth, async (req, res) => {
+  const { logger, jwtPayload } = req.locals;
+
+  try {
+    const response = await scheduleController.getListByUser(req.query, jwtPayload);
+
+    return res.status(200).send(response);
+  } catch (error) {
+    logger.error(error);
+
+    return res.status(error.httpCode || 500).send({ error: error.message });
+  }
+})
+
 router.get('/schedule/detail', validateAuth, async (req, res) => {
   const { logger } = req.locals;
   const { id } = req.query

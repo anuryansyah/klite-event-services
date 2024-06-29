@@ -1,6 +1,6 @@
 const moment = require("moment");
-const { DailyEventModel, SpecialEventModel, ScheduleModel } = require("../models");
-const { telegramBotUtils } = require("../utils");
+const { DailyEventModel, SpecialEventModel, ScheduleModel, RoleModel } = require("../models");
+const { telegramBotUtils, timeCheckUtils } = require("../utils");
 
 moment.locale('id')
 
@@ -9,6 +9,64 @@ exports.getList = async (params) => {
   const eventData = [];
 
   const events = await ScheduleModel.find({ date: new Date(date) })
+    .populate("announcer")
+    .populate("createBy")
+    .populate("updateBy")
+    .sort({ startHour: 'asc' })
+    .lean();
+
+
+  const collectEventData = async () => {
+    for (const event of events) {
+      // Periksa tumpang tindih waktu dengan acara lain
+      const isConflicting = await timeCheckUtils.checkScheduleConflict(date, event.startHour, event.endHour, event._id);
+
+      // Buat objek data acara
+      const eventDataItem = {
+        id: event._id,
+        title: event.title,
+        desc: event.desc,
+        category: event.category,
+        announcer: event.announcer.map(a => a.fullname).join(', '),
+        startHour: event.startHour,
+        endHour: event.endHour,
+        conflict: ''
+      };
+
+      // Jika ada tumpang tindih waktu, tambahkan pesan kesalahan
+      if (isConflicting) {
+        eventDataItem.conflict = 'Waktu Bentrok';
+      }
+
+      // Tambahkan data acara ke dalam array eventData
+      eventData.push(eventDataItem);
+    }
+  };
+
+  await collectEventData();
+
+  return {
+    status: true,
+    data: eventData
+  };
+}
+
+exports.getListByUser = async (params, session) => {
+  const { date } = params;
+  const eventData = [];
+
+  const role = await RoleModel.findOne({ _id: session.roleId }).lean();
+  const isAnnouncer = role.roleName === 'announcer'
+
+  const filter = {
+    date: new Date(date)
+  }
+
+  if (isAnnouncer) {
+    filter.announcer = { $in: [session.id] }
+  }
+
+  const events = await ScheduleModel.find(filter)
     .populate("announcer")
     .populate("createBy")
     .populate("updateBy")
@@ -76,16 +134,21 @@ exports.getDetail = async (_id) => {
 exports.create = async (payload, session) => {
   const { type, date } = payload;
   let error, newData;
+
+  const exceptData = await ScheduleModel.find({ date }).lean();
+  const exceptIds = exceptData.map(event => event.eventId.toString());
+
   
   switch (type) {
     case 'daily':
       const currentDate = new Date(date);
       const currentDay = currentDate.getDay() === 0 ? 7 : currentDate.getDay();
-      const dailyEvent = await await DailyEventModel.find({ day: currentDay, isDelete: false }).lean();
+      const dailyEvent = await DailyEventModel.find({ _id: { $nin: exceptIds }, day: currentDay, isDelete: false }).lean();
 
       if (dailyEvent.length > 0) {
         newData = dailyEvent.map(data => {
           return {
+            eventId: data._id,
             title: data.title,
             desc: data.desc,
             category: 'Harian',
@@ -105,16 +168,17 @@ exports.create = async (payload, session) => {
         };
       }
 
-      error = new Error('Tidak Ada Acara Di Tanggal Ini.');
+      error = new Error('Tidak Ada Acara Di Tanggal Ini Atau Acara Sudah Ditambahkan.');
       error.httpCode = 404;
 
       throw error;
     case 'special':
-      const specialEvent = await await SpecialEventModel.find({ date, isDelete: false }).lean();
+      const specialEvent = await SpecialEventModel.find({ _id: { $nin: exceptIds }, date, isDelete: false }).lean();
 
       if (specialEvent.length > 0) {
         newData = specialEvent.map(data => {
           return {
+            eventId: data._id,
             title: data.title,
             desc: data.desc,
             category: 'Spesial',
@@ -134,7 +198,7 @@ exports.create = async (payload, session) => {
         };;
       }
 
-      error = new Error('Tidak Ada Acara Di Tanggal Ini.');
+      error = new Error('Tidak Ada Acara Di Tanggal Ini Atau Acara Sudah Ditambahkan.');
       error.httpCode = 404;
 
       throw error;
@@ -152,6 +216,14 @@ exports.update = async (_id, payload, session) => {
   const event = await ScheduleModel.findOne({ _id }).lean();
 
   if (event) {
+    const isConflicting = await timeCheckUtils.checkScheduleConflict(event.date, startHour, endHour, _id);
+
+    if (isConflicting) {
+      const conflictError = new Error('Waktu acara bertabrakan dengan acara yang sudah ada.');
+      conflictError.httpCode = 400;
+      throw conflictError;
+    }
+
     const update = {
       $set: {
         desc,
@@ -214,7 +286,7 @@ exports.reset = async (date) => {
 }
 
 exports.sendNotification = async (date) => {
-  const events = await ScheduleModel.find({ date: new Date(date) }).populate('announcer').lean();
+  const events = await ScheduleModel.find({ date: new Date(date) }).populate('announcer').sort({ startHour: 'asc' }).lean();
   const dataUser = [];
 
   events.map(data => {
