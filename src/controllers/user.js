@@ -190,7 +190,8 @@ exports.delete = async (_id) => {
   const user = await UserModel.findOne({ _id }).lean();
 
   if (user) {
-    await UserModel.updateOne({ _id }, {isDelete: true});
+    // await UserModel.updateOne({ _id }, {isDelete: true});
+    await UserModel.deleteOne({ _id });
     const response = {
       status : true,
       message: "User Berhasil Dihapus"
